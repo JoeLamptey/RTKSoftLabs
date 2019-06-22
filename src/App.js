@@ -9,12 +9,17 @@ import {Paper,
    InputLabel,
    MenuItem,
    Checkbox,
-   TextField, 
+   TextField,
+   AppBar,
+   Toolbar, 
    Grid,
    Button,
+   Modal,
+   Divider,
    List, ListItem, ListItemText} from '@material-ui/core'
 
-   //import licfile from './FileSystem'
+  import jszip from 'jszip'
+  import {saveAs} from 'file-saver'
 
 const styles = (theme => ({
   paper: {
@@ -22,9 +27,19 @@ const styles = (theme => ({
     textAlign: "center",
     color: "#1a2"
   },
+  modal: {
+    position: 'absolute',
+    top: "45%",
+    left: "45%",
+    width: 400,
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(4),
+    outline: 'none',
+  },
   container: {
-    margin: "0% 15%",
-    paddingTop: "5%"
+    margin: "0% 10%",
+    paddingTop: "3%"
   },
   root:{
     backgroundColor: "#282c34",
@@ -36,24 +51,24 @@ const styles = (theme => ({
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
     marginTop: theme.spacing(2),
-    width: 300,
+    width: 350,
   },
   button:{
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
     marginTop: theme.spacing(2),
-    width: 300,
+    width: 350,
   },
   select:{
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
     marginTop: theme.spacing(1),
-    width: 300,
+    width: 350,
   },
   selectLabel:{
-    marginLeft: theme.spacing(6),
+    marginLeft: theme.spacing(5),
     marginTop: theme.spacing(1),
-    width: 300,
+    width: 350,
     textAlign: "center"
   },
   listLicense:{
@@ -95,8 +110,11 @@ class App extends Component{
         {name: 'exports'},
         {name: 'credits'},
       ],
-      selectedPackages: []
+      selectedPackages: [],
+      open: false,
+      selectedClient: ''
     }
+    
   }
 
   filterClient = (change)=>{
@@ -109,8 +127,17 @@ class App extends Component{
     //console.log(searchClients)
   }
 
-  setClient = (client)=>{
-    console.log(client.currentTarget.dataset.list_item)
+  // setClient = (client)=>{
+  //   console.log(client.currentTarget.dataset.list_item)
+  // }
+
+  handleOpen =(client)=>{
+    let selectedClient = client.currentTarget.dataset.list_item
+    this.setState({open: true, selectedClient})
+  }
+  
+  handleClose =()=>{
+    this.setState({open: false})
   }
 
   componentWillMount(){
@@ -127,7 +154,15 @@ class App extends Component{
       end: e.target.end.value,
       modules: this.state.selectedPackages
     }
-    console.log('License', lic)
+    //console.log('License', lic)
+
+    let zip = new jszip()
+    zip.folder('license').file(lic.company+'.lic', JSON.stringify(lic))
+    zip.generateAsync({type:"blob"})
+    .then(function(content) {
+        saveAs(content, './'+lic.company+".zip")
+    }).catch(e => console.log('Error: ',e))
+
     this.setState({selectedPackages: []})
     e.target.company.value = ''
     e.target.start.value = ''
@@ -148,9 +183,13 @@ class App extends Component{
       <div className={classes.root}>      
         <div className={classes.container}>
           <Paper className={classes.paper}>        
-            <Typography variant="h5" component="h3">
-              RTK SoftLabs
-            </Typography>
+            <AppBar position="static" color="default">
+              <Toolbar>
+                <Typography variant="h6" color="inherit">
+                  RTK SoftLabs | Digital Technology Center
+                </Typography>
+              </Toolbar>
+            </AppBar>
             <br />
             <Grid container spacing={3}>
               <Grid item xs={4}>
@@ -164,12 +203,27 @@ class App extends Component{
                   <List className={classes.listLicense}>
                       {
                         this.state.searchClients.map((client, index)=>{
-                            return (<ListItem button key={index} onClick={this.setClient} data-list_item={client.name}>
+                            return (<ListItem button key={index} onClick={this.handleOpen} data-list_item={client.name}>
                                 <ListItemText>{client.name}</ListItemText>
                             </ListItem>)
                         })
                       }
                   </List>
+                  <Modal
+                    aria-labelledby="simple-modal-title"
+                    aria-describedby="simple-modal-description"
+                    open={this.state.open}
+                    onClose={this.handleClose}
+                  >
+                    <div  className={classes.modal}>
+                      <Typography variant="h6" id="modal-title">
+                        {this.state.selectedClient} License
+                      </Typography>
+                      <Typography variant="subtitle1" id="simple-modal-description">
+                        License details here.... Including modules, start and date of expiration!
+                      </Typography>
+                    </div>
+                  </Modal>
                 </Paper>
               </Grid>
               <Grid item xs={8}>
@@ -225,7 +279,17 @@ class App extends Component{
                             Generate License
                     </Button>
                   </form>
+                  <br />
+                  <Divider />
+                  <Grid container spacing={3}>
+                    
+                    <Grid item xs={6}>Project Manager: <strong>Shokhista</strong></Grid>
+                    <Grid item xs={6}> Analyst and designer: <strong>Liya</strong></Grid>
+                    <Grid item xs={6}> Backend Engineer: <strong>Mikhail</strong></Grid> 
+                    <Grid item xs={6}>Frontend Engineers: <strong>Manuel & Joseph</strong></Grid>
+                  </Grid>                
                 </Paper>
+                
               </Grid>
             </Grid>          
           </Paper>  
